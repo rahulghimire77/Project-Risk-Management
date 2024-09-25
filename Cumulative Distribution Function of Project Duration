@@ -1,0 +1,48 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.stats import norm
+
+# PERT parameters
+L = 3  # optimistic time
+M = 5  # most likely time
+H = 10 # pessimistic time
+
+# Number of activities
+n_values = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+
+# PERT distribution function
+def pert_random(L, M, H, size=1):
+    mean = (L + 4 * M + H) / 6
+    variance = (mean-L)*(H-mean)/7
+    std_dev = np.sqrt(variance)
+    return np.random.normal(mean, std_dev, size)
+
+# Simulate project durations
+def simulate_project_duration(n, num_simulations=10000):
+    durations = []
+    for _ in range(num_simulations):
+        total_duration = np.sum(pert_random(L, M, H, n))
+        durations.append(total_duration)
+    return np.array(durations)
+
+# Plot CDFs
+plt.figure(figsize=(20, 12))
+for n in n_values:
+    durations = simulate_project_duration(n)
+    mean_duration = np.mean(durations)
+    std_duration = np.std(durations)
+
+    # Empirical CDF
+    sorted_durations = np.sort(durations)
+    cdf = np.arange(1, len(sorted_durations) + 1) / len(sorted_durations)
+    plt.plot(sorted_durations, cdf, label=f'Monte Carlo (n={n})')
+
+    # Normal CDF
+    normal_cdf = norm.cdf(sorted_durations, mean_duration, std_duration)
+    plt.plot(sorted_durations, normal_cdf, linestyle='dashed', label=f'Normal Approx (n={n})')
+
+plt.xlabel('Total Project Duration')
+plt.ylabel('Cumulative Probability')
+plt.legend()
+plt.title('CDF Comparison of Project Duration')
+plt.show()
